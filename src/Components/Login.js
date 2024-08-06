@@ -2,10 +2,16 @@ import React from "react";
 import Header from "./Header";
 import { useState, useRef } from "react";
 import { checkValidData1, checkValidData2 } from "../utils/checkValidData";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+	createUserWithEmailAndPassword,
+	updateProfile,
+	signInWithEmailAndPassword,
+} from "firebase/auth";
 import { auth } from "../utils/firebase";
-import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
+import { BG_IMAGE, LOGO } from "../utils/constants";
+import { AVATAR } from "../utils/constants";
 
 const Login = () => {
 	const [isSignInForm, setIsSignInForm] = useState(true);
@@ -14,13 +20,12 @@ const Login = () => {
 	const name = useRef(null);
 	const email = useRef(null);
 	const password = useRef(null);
-	const navigate = useNavigate();
+	const dispatch = useDispatch();
 
 	const handleButtonClick = () => {
 		// SignIn/SignUp Authenticatin
 
 		if (isSignInForm) {
-			console.log("Sign In");
 			const message = checkValidData1(
 				email.current.value,
 				password.current.value
@@ -33,9 +38,7 @@ const Login = () => {
 				password.current.value
 			)
 				.then((userCredential) => {
-					// Signed in
 					const user = userCredential.user;
-					navigate("/browse");
 				})
 				.catch((error) => {
 					const errorCode = error.code;
@@ -43,7 +46,6 @@ const Login = () => {
 					console.log(errorCode + " - " + errorMessage);
 				});
 		} else {
-			console.log("Sign Up");
 			const message = checkValidData2(
 				name.current.value,
 				email.current.value,
@@ -59,10 +61,18 @@ const Login = () => {
 					const user = userCredential.user;
 					updateProfile(user, {
 						displayName: name.current.value,
-						photoURL: "https://avatars.githubusercontent.com/u/74318710?v=4",
+						photoURL: AVATAR,
 					})
 						.then(() => {
-							navigate("/browse");
+							const { uid, email, displayName, photoURL } = auth.currentUser;
+							dispatch(
+								addUser({
+									uid: uid,
+									email: email,
+									displayName: displayName,
+									photoURL: photoURL,
+								})
+							);
 						})
 						.catch((error) => {
 							setErrorMessage(error.message);
@@ -84,11 +94,7 @@ const Login = () => {
 		<div>
 			<Header />
 			<div className="absolute">
-				<img
-					className=""
-					src="https://assets.nflxext.com/ffe/siteui/vlv3/826348c2-cdcb-42a0-bc11-a788478ba5a2/6d20b198-e7ab-4e9f-a1aa-666faa0298f9/IN-en-20240729-POP_SIGNUP_TWO_WEEKS-perspective_WEB_a67d8c9e-8121-4a74-98e4-8005eb2df227_large.jpg"
-					alt="login_image"
-				></img>
+				<img className="" src={BG_IMAGE} alt="login_image"></img>
 			</div>
 			<form
 				onSubmit={(e) => e.preventDefault()}
